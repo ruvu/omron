@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   // get sensor config from params
   string host, frame_id, local_ip;
   double start_angle, end_angle, expected_frequency, frequency_tolerance, timestamp_min_acceptable,
-      timestamp_max_acceptable, frequency, reconnect_timeout;
+      timestamp_max_acceptable, frequency, reconnect_timeout, timestamp_offset;
   bool publish_intensities;
   bool invert_scan;
   ros::param::param<std::string>("~host", host, "192.168.1.1");
@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
   ros::param::param<double>("~frequency_tolerance", frequency_tolerance, 0.1);
   ros::param::param<double>("~timestamp_min_acceptable", timestamp_min_acceptable, -1);
   ros::param::param<double>("~timestamp_max_acceptable", timestamp_max_acceptable, -1);
+  ros::param::param<double>("~timestamp_offset", timestamp_offset, 0);
   ros::param::param<double>("~reconnect_timeout", reconnect_timeout, 2.0);
   ros::param::param<bool>("~publish_intensities", publish_intensities, false);
   ros::param::param<bool>("~invert_scan", invert_scan, false);
@@ -166,7 +167,7 @@ int main(int argc, char *argv[])
         }
 
         // Stamp and publish message diagnosed
-        laserscan_msg.header.stamp = ros::Time::now();
+        laserscan_msg.header.stamp = ros::Time::now() + ros::Duration(timestamp_offset);
         laserscan_msg.header.seq++;
         diagnosed_publisher.publish(laserscan_msg);
 
