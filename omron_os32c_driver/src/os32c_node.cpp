@@ -148,6 +148,7 @@ int main(int argc, char *argv[])
       continue;
     }
 
+    int ctr = 10;
     sensor_msgs::LaserScan laserscan_msg;
     os32c.fillLaserScanStaticConfig(&laserscan_msg);
     laserscan_msg.header.frame_id = frame_id;
