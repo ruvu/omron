@@ -136,6 +136,18 @@ int main(int argc, char *argv[])
       continue;
     }
 
+    try
+    {
+      os32c.startUDPIO();
+      os32c.sendMeasurmentReportConfigUDP();
+    }
+    catch (std::logic_error ex)
+    {
+      ROS_ERROR("Logic error: %s. Reconnecting in %.2f seconds ...", ex.what(), reconnect_timeout);
+      ros::Duration(reconnect_timeout).sleep();
+      continue;
+    }
+
     sensor_msgs::LaserScan laserscan_msg;
     os32c.fillLaserScanStaticConfig(&laserscan_msg);
     laserscan_msg.header.frame_id = frame_id;
@@ -145,7 +157,7 @@ int main(int argc, char *argv[])
       try
       {
         // Poll ranges and reflectivity
-        RangeAndReflectanceMeasurement report = os32c.getSingleRRScan();
+        MeasurementReport report = os32c.receiveMeasurementReportUDP();
         OS32C::convertToLaserScan(report, &laserscan_msg);
 
         // In earlier versions reflectivity was not received. So to be backwards
@@ -162,6 +174,14 @@ int main(int argc, char *argv[])
 
         // Update diagnostics
         updater.update();
+
+        // Every tenth message received, send the keepalive message in response.
+        // TODO: Make this time-based instead of message-count based.
+        if (++ctr > 10)
+        {
+          os32c.sendMeasurmentReportConfigUDP();
+          ctr = 0;
+        }
       }
       catch (std::runtime_error ex)
       {
