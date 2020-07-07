@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
       try
       {
         // Poll ranges and reflectivity
-        RangeAndReflectanceMeasurement report = os32c.getSingleRRScan();
+        MeasurementReport report = os32c.receiveMeasurementReportUDP();
         OS32C::convertToLaserScan(report, &laserscan_msg);
 
         // In earlier versions reflectivity was not received. So to be backwards
