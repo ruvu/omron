@@ -25,7 +25,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 
 #include <gtest/gtest.h>
-#include <boost/asio.hpp>
 
 #include "omron_os32c_driver/range_and_reflectance_measurement.h"
 #include "odva_ethernetip/serialization/serializable_buffer.h"

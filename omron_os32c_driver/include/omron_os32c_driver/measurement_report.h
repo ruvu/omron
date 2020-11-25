@@ -26,7 +26,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #ifndef OMRON_OS32C_DRIVER_MEASUREMENT_REPORT_H
 #define OMRON_OS32C_DRIVER_MEASUREMENT_REPORT_H
 
-#include <string>
 #include <vector>
 
 #include "odva_ethernetip/eip_types.h"

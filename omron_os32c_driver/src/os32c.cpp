@@ -24,10 +24,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 */
 
 
-#include <ros/ros.h>
+#include <ros/console.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/asio.hpp>
 
 #include "omron_os32c_driver/os32c.h"
 #include "odva_ethernetip/serialization/serializable_buffer.h"
@@ -36,19 +35,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "odva_ethernetip/sequenced_address_item.h"
 #include "odva_ethernetip/sequenced_data_item.h"
 
-using std::cout;
-using std::endl;
+
 using boost::shared_ptr;
 using boost::make_shared;
-using boost::asio::buffer;
-using eip::Session;
 using eip::serialization::SerializableBuffer;
-using eip::RRDataResponse;
 using eip::CPFItem;
 using eip::CPFPacket;
 using eip::SequencedAddressItem;
 using eip::SequencedDataItem;
-using omron_os32c_driver::RangeAndReflectanceMeasurement;
 
 namespace omron_os32c_driver {
 

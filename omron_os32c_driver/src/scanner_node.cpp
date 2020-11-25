@@ -24,13 +24,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 */
 
 
-#include <ros/ros.h>
-
+#include <iostream>
 #include "odva_ethernetip/io_scanner.h"
+
 
 using std::cout;
 using std::endl;
 using eip::IOScanner;
+
 
 int main(int argc, char const* argv[])
 {

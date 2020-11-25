@@ -26,14 +26,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #ifndef OMRON_OS32C_DRIVER_MEASUREMENT_REPORT_CONFIG_H
 #define OMRON_OS32C_DRIVER_MEASUREMENT_REPORT_CONFIG_H
 
-#include <string>
-
 #include "odva_ethernetip/eip_types.h"
 #include "odva_ethernetip/serialization/reader.h"
 #include "odva_ethernetip/serialization/writer.h"
 #include "odva_ethernetip/serialization/serializable.h"
 
-using std::string;
 using eip::serialization::Serializable;
 using eip::serialization::Reader;
 using eip::serialization::Writer;

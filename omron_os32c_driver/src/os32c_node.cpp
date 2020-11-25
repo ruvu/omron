@@ -23,8 +23,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCL
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <ros/ros.h>
+#include <ros/init.h>
+#include <ros/node_handle.h>
+#include <ros/param.h>
+#include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/range/algorithm.hpp>
 #include <diagnostic_updater/publisher.h>
@@ -38,8 +40,7 @@ REGISTER_ROSCONSOLE_BRIDGE;
 #include "omron_os32c_driver/os32c.h"
 #include "omron_os32c_driver/range_and_reflectance_measurement.h"
 
-using std::cout;
-using std::endl;
+using std::string;
 using boost::shared_ptr;
 using boost::range::reverse;
 using sensor_msgs::LaserScan;

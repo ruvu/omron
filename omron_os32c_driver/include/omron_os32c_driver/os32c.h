@@ -26,9 +26,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #ifndef OMRON_OS32C_DRIVER_OS32C_H
 #define OMRON_OS32C_DRIVER_OS32C_H
 
-#include <gtest/gtest_prod.h>
-#include <string>
-#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <sensor_msgs/LaserScan.h>
 
@@ -38,9 +35,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "omron_os32c_driver/measurement_report_config.h"
 #include "omron_os32c_driver/range_and_reflectance_measurement.h"
 
-using std::vector;
 using boost::shared_ptr;
-using sensor_msgs::LaserScan;
 using eip::Session;
 using eip::socket::Socket;
 
