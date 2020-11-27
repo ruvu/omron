@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>omron_os32c_driver</name>
   <version>1.1.0</version>
   <description>Interface driver for Omron OS32C Lidar via Ethernet/IP (Industrial Protocol)</description>
@@ -8,15 +9,18 @@
   <maintainer email="rein@eurogroep.com">Rein Appeldoorn</maintainer>
   <author email="kareem@shehata.ca">Kareem Shehata</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>boost</depend>
   <depend>diagnostic_updater</depend>
   <depend>odva_ethernetip</depend>
-  <depend>rosconsole_bridge</depend>
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
 
-  <test_depend>rosunit</test_depend>
-  <test_depend>roslaunch</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

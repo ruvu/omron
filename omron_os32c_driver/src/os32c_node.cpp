@@ -24,14 +24,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 */
 
 
-#include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/range/algorithm.hpp>
-#include <diagnostic_updater/publisher.h>
-#include <sensor_msgs/LaserScan.h>
+#include <diagnostic_updater/publisher.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
-#include <rosconsole_bridge/bridge.h>
-REGISTER_ROSCONSOLE_BRIDGE;
+// TODO: figure out what functionality rosconsole_bridge was providing
+//#include <rosconsole_bridge/bridge.h>
+// REGISTER_ROSCONSOLE_BRIDGE;
 
 #include "odva_ethernetip/socket/tcp_socket.h"
 #include "odva_ethernetip/socket/udp_socket.h"
@@ -40,9 +40,10 @@ REGISTER_ROSCONSOLE_BRIDGE;
 
 using std::cout;
 using std::endl;
+using namespace std::chrono_literals;
 using boost::shared_ptr;
 using boost::range::reverse;
-using sensor_msgs::LaserScan;
+using sensor_msgs::msg::LaserScan;
 using eip::socket::TCPSocket;
 using eip::socket::UDPSocket;
 using namespace omron_os32c_driver;
@@ -52,60 +53,70 @@ const double EPS = 1e-3;
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "os32c");
-  ros::NodeHandle nh;
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("os32c");
 
-  // get sensor config from params
-  string host, frame_id, local_ip;
-  double start_angle, end_angle, expected_frequency, frequency_tolerance, timestamp_min_acceptable,
-      timestamp_max_acceptable, frequency, reconnect_timeout;
-  bool publish_intensities;
-  bool invert_scan;
-  ros::param::param<std::string>("~host", host, "192.168.1.1");
-  ros::param::param<std::string>("~local_ip", local_ip, "0.0.0.0");
-  ros::param::param<std::string>("~frame_id", frame_id, "laser");
-  ros::param::param<double>("~start_angle", start_angle, OS32C::ANGLE_MAX);
-  ros::param::param<double>("~end_angle", end_angle, OS32C::ANGLE_MIN);
-  ros::param::param<double>("~frequency", frequency, 12.856);
-  ros::param::param<double>("~expected_frequency", expected_frequency, frequency);
-  ros::param::param<double>("~frequency_tolerance", frequency_tolerance, 0.1);
-  ros::param::param<double>("~timestamp_min_acceptable", timestamp_min_acceptable, -1);
-  ros::param::param<double>("~timestamp_max_acceptable", timestamp_max_acceptable, -1);
-  ros::param::param<double>("~reconnect_timeout", reconnect_timeout, 2.0);
-  ros::param::param<bool>("~publish_intensities", publish_intensities, false);
-  ros::param::param<bool>("~invert_scan", invert_scan, false);
+  node->declare_parameter("host", "192.168.1.1");
+  node->declare_parameter("local_ip", "0.0.0.0");
+  node->declare_parameter("frame_id", "laser");
+  node->declare_parameter("start_angle", OS32C::ANGLE_MAX);
+  node->declare_parameter("end_angle", OS32C::ANGLE_MIN);
+  node->declare_parameter("frequency", 12.856);
+  node->declare_parameter("frequency_tolerance", 0.1);
+  node->declare_parameter("timestamp_min_acceptable", -1.0);
+  node->declare_parameter("timestamp_max_acceptable", -1.0);
+  node->declare_parameter("reconnect_timeout", 2.0);
+  node->declare_parameter("publish_intensities", false);
+  node->declare_parameter("invert_scan", false);
+
+  string host = node->get_parameter("host").as_string();
+  string local_ip = node->get_parameter("local_ip").as_string();
+  string frame_id = node->get_parameter("frame_id").as_string();
+  double start_angle = node->get_parameter("start_angle").as_double();
+  double end_angle = node->get_parameter("end_angle").as_double();
+  double frequency = node->get_parameter("frequency").as_double();
+  double frequency_tolerance = node->get_parameter("frequency_tolerance").as_double();
+  double timestamp_min_acceptable = node->get_parameter("timestamp_min_acceptable").as_double();
+  double timestamp_max_acceptable = node->get_parameter("timestamp_max_acceptable").as_double();
+  double reconnect_timeout = node->get_parameter("reconnect_timeout").as_double();
+  bool publish_intensities = node->get_parameter("publish_intensities").as_bool();
+  bool invert_scan = node->get_parameter("invert_scan").as_bool();
+
+  node->declare_parameter("expected_frequency", frequency);
+  double expected_frequency = node->get_parameter("expected_frequency").as_double();
 
   // publisher for laserscans
-  ros::Publisher laserscan_pub = nh.advertise<LaserScan>("scan", 1);
+  auto laserscan_pub = node->create_publisher<LaserScan>("scan", 1);
 
   // Validate frequency parameters
   if (frequency > 25)
   {
-    ROS_FATAL("Frequency exceeds the limit of 25hz.");
+    RCLCPP_FATAL(node->get_logger(), "Frequency exceeds the limit of 25hz.");
     return -1;
   }
   else if (frequency <= 0)
   {
-    ROS_FATAL("Frequency should be positive");
+    RCLCPP_FATAL(node->get_logger(), "Frequency should be positive");
     return -1;
   }
 
   if (fabs(frequency - expected_frequency) > EPS)
   {
-    ROS_WARN("Frequency parameter is not equal to expected frequency parameter.");
+    RCLCPP_WARN(node->get_logger(), "Frequency parameter is not equal to expected frequency parameter.");
   }
 
-  // initialize loop rate
-  ros::Rate loop_rate(frequency);
+  rclcpp::Rate loop_rate(frequency);
+  rclcpp::Rate reconnect_rate(1 / frequency);
+
 
   // diagnostics for frequency
-  Updater updater;
+  Updater updater(node);
   updater.setHardwareID(host);
   DiagnosedPublisher<LaserScan> diagnosed_publisher(
       laserscan_pub, updater, FrequencyStatusParam(&expected_frequency, &expected_frequency, frequency_tolerance),
       TimeStampStatusParam(timestamp_min_acceptable, timestamp_max_acceptable));
 
-  while (ros::ok())
+  while (rclcpp::ok())
   {
     boost::asio::io_service io_service;
     shared_ptr<TCPSocket> socket = shared_ptr<TCPSocket>(new TCPSocket(io_service));
@@ -114,12 +125,15 @@ int main(int argc, char* argv[])
 
     try
     {
+      RCLCPP_INFO(node->get_logger(), "Trying to connect to %s", host.c_str());
       os32c.open(host);
+      RCLCPP_INFO(node->get_logger(), "Socket successfuly opened");
     }
     catch (std::runtime_error ex)
     {
-      ROS_ERROR("Exception caught opening session: %s. Reconnecting in %.2f seconds ...", ex.what(), reconnect_timeout);
-      ros::Duration(reconnect_timeout).sleep();
+      RCLCPP_ERROR(node->get_logger(), "Exception caught opening session: %s. Reconnecting in %.2f seconds ...",
+                   ex.what(), reconnect_timeout);
+      reconnect_rate.sleep();
       continue;
     }
 
@@ -131,17 +145,18 @@ int main(int argc, char* argv[])
     }
     catch (std::invalid_argument ex)
     {
-      ROS_ERROR("Invalid arguments in sensor configuration: %s. Reconnecting in %.2f seconds ...", ex.what(),
-                reconnect_timeout);
-      ros::Duration(reconnect_timeout).sleep();
+      RCLCPP_ERROR(node->get_logger(),
+                   "Invalid arguments in sensor configuration: %s. Reconnecting in %.2f seconds ...", ex.what(),
+                   reconnect_timeout);
+      reconnect_rate.sleep();
       continue;
     }
 
-    sensor_msgs::LaserScan laserscan_msg;
+    LaserScan laserscan_msg;
     os32c.fillLaserScanStaticConfig(&laserscan_msg);
     laserscan_msg.header.frame_id = frame_id;
 
-    while (ros::ok())
+    while (rclcpp::ok())
     {
       try
       {
@@ -164,42 +179,42 @@ int main(int argc, char* argv[])
         }
 
         // Stamp and publish message diagnosed
-        laserscan_msg.header.stamp = ros::Time::now();
-        laserscan_msg.header.seq++;
+        laserscan_msg.header.stamp = node->now();
         diagnosed_publisher.publish(laserscan_msg);
 
         // Update diagnostics
-        updater.update();
+        updater.force_update();
       }
       catch (std::runtime_error ex)
       {
-        ROS_ERROR_STREAM_DELAYED_THROTTLE(5.0, "Exception caught requesting scan data: " << ex.what());
+        RCLCPP_ERROR_STREAM_THROTTLE(node->get_logger(), *node->get_clock(), 5.0,
+                                     "Exception caught requesting scan data: " << ex.what());
       }
       catch (std::logic_error ex)
       {
-        ROS_ERROR_STREAM("Problem parsing return data: " << ex.what());
+        RCLCPP_ERROR_STREAM(node->get_logger(), "Problem parsing return data: " << ex.what());
       }
 
-      if (!laserscan_msg.header.stamp.isZero() &&
-          (ros::Time::now() - laserscan_msg.header.stamp).toSec() > reconnect_timeout)
+      if (!laserscan_msg.header.stamp.nanosec == 0 &&
+          (node->get_clock()->now() - laserscan_msg.header.stamp).seconds() > reconnect_timeout)
       {
-        ROS_ERROR("No scan received for %.2f seconds, reconnecting ...", reconnect_timeout);
-        laserscan_msg.header.stamp = ros::Time();
+        RCLCPP_ERROR(node->get_logger(), "No scan received for %.2f seconds, reconnecting ...", reconnect_timeout);
+        laserscan_msg.header.stamp = rclcpp::Time(0);
         break;
       }
 
-      ros::spinOnce();
+      rclcpp::spin_some(node);
 
       // sleep
       loop_rate.sleep();
     }
 
-    if (!ros::ok())
+    if (!rclcpp::ok())
     {
       os32c.closeActiveConnection();
       os32c.close();
     }
   }
 
-  return 0;
+  rclcpp::shutdown();
 }

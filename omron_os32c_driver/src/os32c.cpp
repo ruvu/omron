@@ -24,10 +24,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 */
 
 
-#include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/asio.hpp>
+#include <rclcpp/logging.hpp>
 
 #include "omron_os32c_driver/os32c.h"
 #include "odva_ethernetip/serialization/serializable_buffer.h"
@@ -149,7 +149,7 @@ RangeAndReflectanceMeasurement OS32C::getSingleRRScan()
   return rr;
 }
 
-void OS32C::fillLaserScanStaticConfig(sensor_msgs::LaserScan* ls)
+void OS32C::fillLaserScanStaticConfig(LaserScan* ls)
 {
   ls->angle_max = start_angle_;
   ls->angle_min = end_angle_;
@@ -158,7 +158,7 @@ void OS32C::fillLaserScanStaticConfig(sensor_msgs::LaserScan* ls)
   ls->range_max = DISTANCE_MAX;
 }
 
-void OS32C::convertToLaserScan(const RangeAndReflectanceMeasurement& rr, sensor_msgs::LaserScan* ls)
+void OS32C::convertToLaserScan(const RangeAndReflectanceMeasurement& rr, LaserScan* ls)
 {
   if (rr.range_data.size() != rr.header.num_beams || rr.reflectance_data.size() != rr.header.num_beams)
   {
@@ -194,7 +194,7 @@ void OS32C::convertToLaserScan(const RangeAndReflectanceMeasurement& rr, sensor_
   }
 }
 
-void OS32C::convertToLaserScan(const MeasurementReport& mr, sensor_msgs::LaserScan* ls)
+void OS32C::convertToLaserScan(const MeasurementReport& mr, LaserScan* ls)
 {
   if (mr.measurement_data.size() != mr.header.num_beams)
   {
@@ -269,14 +269,14 @@ void OS32C::startUDPIO()
   t_to_o.rpi = 0x00013070;
 
   connection_num_ = createConnection(o_to_t, t_to_o);
-  ROS_INFO("Opened connection with id %d", connection_num_);
+  RCLCPP_INFO(rclcpp::get_logger("OS32C"), "Opened connection with id %d", connection_num_);
 }
 
 void OS32C::closeActiveConnection()
 {
   if (connection_num_ >= 0)
   {
-    ROS_INFO("Closing connection with id %d", connection_num_);
+    RCLCPP_INFO(rclcpp::get_logger("OS32C"), "Closing connection with id %d", connection_num_);
     closeConnection(connection_num_);
   }
 }

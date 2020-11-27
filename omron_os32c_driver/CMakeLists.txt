@@ -1,67 +1,63 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(omron_os32c_driver)
+cmake_minimum_required(VERSION 3.5)
+project(omron_os32c_driver LANGUAGES CXX)
 
-find_package(catkin REQUIRED COMPONENTS diagnostic_updater odva_ethernetip rosconsole_bridge roscpp sensor_msgs)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-find_package(Boost 1.47 REQUIRED COMPONENTS system)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS diagnostic_updater odva_ethernetip rosconsole_bridge roscpp sensor_msgs
-  LIBRARIES omron_os32c
-  DEPENDS Boost
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(Boost REQUIRED)
+find_package(odva_ethernetip REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 add_library(omron_os32c src/os32c.cpp)
-target_link_libraries(omron_os32c
-  ${catkin_LIBRARIES}
+target_include_directories(omron_os32c PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  omron_os32c
+  Boost
+  odva_ethernetip
+  sensor_msgs
+  rclcpp
 )
 
-## Declare a cpp executable
 add_executable(scanner_node src/scanner_node.cpp)
 target_link_libraries(scanner_node
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
+  omron_os32c
 )
 
 add_executable(omron_os32c_node src/os32c_node.cpp)
 target_link_libraries(omron_os32c_node
   omron_os32c
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
+)
+ament_target_dependencies(omron_os32c_node
+  diagnostic_updater
 )
 
-## Mark executables and libraries for installation
-install(TARGETS omron_os32c omron_os32c_node scanner_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+install(TARGETS
+    omron_os32c_node
+    scanner_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch/os32c.launch)
-
-  catkin_add_gtest(${PROJECT_NAME}-test
-    test/measurement_report_config_test.cpp
-    test/measurement_report_header_test.cpp
-    test/measurement_report_test.cpp
-    test/range_and_reflectance_measurement_test.cpp
-    test/os32c_test.cpp
-    test/test_main.cpp
-  )
-  target_link_libraries(${PROJECT_NAME}-test ${Boost_LIBRARIES} ${catkin_LIBRARIES} omron_os32c)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_package()

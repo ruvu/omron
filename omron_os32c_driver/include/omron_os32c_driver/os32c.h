@@ -30,7 +30,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <sensor_msgs/LaserScan.h>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
 #include "odva_ethernetip/session.h"
 #include "odva_ethernetip/socket/socket.h"
@@ -40,7 +40,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 using std::vector;
 using boost::shared_ptr;
-using sensor_msgs::LaserScan;
+using sensor_msgs::msg::LaserScan;
 using eip::Session;
 using eip::socket::Socket;
 
@@ -175,7 +175,7 @@ public:
    * which are configured by the user but ultimately reported by the device.
    * @param ls Laserscan message to populate.
    */
-  void fillLaserScanStaticConfig(sensor_msgs::LaserScan* ls);
+  void fillLaserScanStaticConfig(LaserScan* ls);
 
   /**
    * Helper to convert a Range and Reflectance Measurement to a ROS LaserScan. LaserScan
@@ -184,14 +184,14 @@ public:
    * @param rr Measurement to convert
    * @param ls Laserscan message to populate.
    */
-  static void convertToLaserScan(const RangeAndReflectanceMeasurement& rr, sensor_msgs::LaserScan* ls);
+  static void convertToLaserScan(const RangeAndReflectanceMeasurement& rr, LaserScan* ls);
 
   /**
    * Helper to convert a Measurement Report to a ROS LaserScan
    * @param mr Measurement to convert
    * @param ls Laserscan message to populate.
    */
-  static void convertToLaserScan(const MeasurementReport& mr, sensor_msgs::LaserScan* ls);
+  static void convertToLaserScan(const MeasurementReport& mr, LaserScan* ls);
 
   void sendMeasurmentReportConfigUDP();
 
