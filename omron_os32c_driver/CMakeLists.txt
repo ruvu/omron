@@ -1,40 +1,43 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(omron_os32c_driver)
 
-find_package(catkin REQUIRED COMPONENTS diagnostic_updater odva_ethernetip rosconsole_bridge roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS diagnostic_updater rosconsole_bridge roscpp sensor_msgs)
 
 find_package(Boost 1.47 REQUIRED COMPONENTS system)
+find_package(odva_ethernetip REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS diagnostic_updater odva_ethernetip rosconsole_bridge roscpp sensor_msgs
+  CATKIN_DEPENDS diagnostic_updater rosconsole_bridge roscpp sensor_msgs
   LIBRARIES omron_os32c
-  DEPENDS Boost
+  DEPENDS Boost odva_ethernetip
 )
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+  ${odva_ethernetip_INCLUDE_DIRS}
 )
 
 add_library(omron_os32c src/os32c.cpp)
 target_link_libraries(omron_os32c
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
+  ${odva_ethernetip_LIBRARIES}
 )
 
 ## Declare a cpp executable
 add_executable(scanner_node src/scanner_node.cpp)
 target_link_libraries(scanner_node
-  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${odva_ethernetip_LIBRARIES}
 )
 
 add_executable(omron_os32c_node src/os32c_node.cpp)
 target_link_libraries(omron_os32c_node
   omron_os32c
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 ## Mark executables and libraries for installation
